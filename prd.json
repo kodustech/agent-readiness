@@ -1,0 +1,438 @@
+{
+  "project": "Kodus Agent Readiness",
+  "branchName": "ralph/agent-readiness",
+  "description": "Open-source CLI tool that evaluates how prepared a codebase is for autonomous AI coding agents, with beautiful TUI reports",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Scaffold Bun + TypeScript project",
+      "description": "As a developer, I need the project initialized with Bun, TypeScript strict mode, package.json, tsconfig, folder structure, and .gitignore so we have a working foundation.",
+      "acceptanceCriteria": [
+        "package.json exists with name 'kodus-agent-readiness', bin field pointing to CLI entry, type 'module'",
+        "tsconfig.json exists with strict mode enabled, target ESNext, module resolution bundler",
+        "src/ directory exists with index.ts entry point",
+        "src/pillars/, src/engine/, src/renderer/, src/types/, src/cli/ directories exist",
+        ".gitignore includes node_modules, dist, .env",
+        "bun install succeeds without errors",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Define core type definitions and interfaces",
+      "description": "As a developer, I need TypeScript types for Pillar, Criterion, CriterionResult, MaturityLevel, ReportData, and Config so all modules share a consistent contract.",
+      "acceptanceCriteria": [
+        "src/types/index.ts exports Criterion type with: id, name, description, pillarId, level (1-5), check function, requiresLLM boolean",
+        "src/types/index.ts exports CriterionResult type with: criterionId, pass boolean, message string, details optional string, skipped optional boolean",
+        "src/types/index.ts exports Pillar type with: id, name, description, icon (emoji), criteria array",
+        "src/types/index.ts exports MaturityLevel enum or union: 1|2|3|4|5 with labels Foundational/Guided/Structured/Optimized/Autonomous",
+        "src/types/index.ts exports ReportData type with: repoName, repoPath, pillars, results, overallLevel, pillarScores, recommendations",
+        "src/types/index.ts exports Config type with: pillars to enable/disable, thresholds, aiEnabled, apiKey",
+        "src/types/index.ts exports ProjectInfo type with: detectedTypes string array, isMonorepo boolean, packages string array",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create CLI entry point with argument parsing",
+      "description": "As a developer, I need the CLI to parse command-line arguments so users can run the tool with various options.",
+      "acceptanceCriteria": [
+        "src/cli/index.ts exports a run() function that parses CLI arguments",
+        "Supports positional argument for repo path (defaults to cwd)",
+        "Supports --ai flag to enable LLM evaluation",
+        "Supports --api-key <key> flag for LLM API key",
+        "Supports --ci flag for non-interactive mode",
+        "Supports --format <text|json> flag (default text)",
+        "Supports --min-level <N> flag for CI gates",
+        "Supports --no-color flag",
+        "Supports --init flag placeholder",
+        "Supports --version and --help flags",
+        "src/index.ts is the bin entry point that calls run()",
+        "Running 'bun run src/index.ts --help' shows usage info",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Use 'commander' or 'citty' for argument parsing. Install as dependency."
+    },
+    {
+      "id": "US-004",
+      "title": "Build project type detector",
+      "description": "As a developer, I need the tool to detect what kind of project is in the repo (Node.js, Python, Go, etc.) so pillar criteria can be language-aware.",
+      "acceptanceCriteria": [
+        "src/engine/detector.ts exports detectProject(repoPath: string): Promise<ProjectInfo>",
+        "Detects Node.js (package.json), Python (pyproject.toml, setup.py, requirements.txt), Go (go.mod), Rust (Cargo.toml), Java (pom.xml, build.gradle)",
+        "Detects monorepo structures: npm/yarn/pnpm workspaces, lerna.json, nx.json, turborepo (turbo.json)",
+        "Returns list of detected types and whether it's a monorepo",
+        "For monorepos, returns list of package/app paths",
+        "Returns empty types array for unrecognized projects (still works)",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Build analysis engine core",
+      "description": "As a developer, I need the engine that registers pillars, runs their criteria checkers, and collects results.",
+      "acceptanceCriteria": [
+        "src/engine/analyzer.ts exports AnalysisEngine class",
+        "Engine accepts an array of Pillar definitions and a repoPath",
+        "Engine.run() executes all criteria check functions concurrently per pillar",
+        "Each criterion check receives repoPath and ProjectInfo as arguments",
+        "Criteria with requiresLLM=true are skipped (marked skipped) unless aiEnabled is true",
+        "Returns Map<string, CriterionResult[]> keyed by pillar id",
+        "Errors in individual criteria are caught and reported as failures (not thrown)",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Build scoring engine",
+      "description": "As a developer, I need the scoring engine that calculates per-pillar scores and determines the overall maturity level.",
+      "acceptanceCriteria": [
+        "src/engine/scorer.ts exports calculatePillarScores(results): PillarScore[] with pillarId, passed, total, percentage",
+        "src/engine/scorer.ts exports calculateLevel(pillarScores, results): { level: MaturityLevel, nextLevelProgress: { current, needed, remaining } }",
+        "Level calculation: a level requires 80% of ALL criteria assigned to that level to pass",
+        "Levels are sequential: cannot reach level N without passing level N-1",
+        "nextLevelProgress shows how many more criteria need to pass to reach the next level",
+        "Skipped criteria (LLM) are excluded from score calculation",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Implement Style & Linting pillar criteria",
+      "description": "As a developer, I need static checks for code style enforcement: linters, formatters, type checkers, pre-commit hooks, editorconfig.",
+      "acceptanceCriteria": [
+        "src/pillars/style-linting.ts exports a Pillar definition with id 'style-linting'",
+        "Criterion: Linter configured - checks for .eslintrc*, eslint.config.*, biome.json, .ruff.toml, .golangci.yml, etc.",
+        "Criterion: Formatter configured - checks for .prettierrc*, biome.json with formatter, pyproject.toml with black/ruff format",
+        "Criterion: Type checker enabled - checks for tsconfig.json with strict, mypy.ini, pyrightconfig.json",
+        "Criterion: Pre-commit hooks - checks for .husky/, .lefthook.yml, .pre-commit-config.yaml, lint-staged in package.json",
+        "Criterion: EditorConfig - checks for .editorconfig file existence",
+        "Each criterion returns pass/fail with descriptive message explaining what was found or missing",
+        "All criteria have level assignments (linter=L2, formatter=L2, types=L3, hooks=L3, editorconfig=L1)",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Implement Testing & Validation pillar criteria",
+      "description": "As a developer, I need static checks for testing capabilities: test framework, test files, test scripts, coverage config, e2e setup.",
+      "acceptanceCriteria": [
+        "src/pillars/testing.ts exports a Pillar definition with id 'testing'",
+        "Criterion: Test framework configured - checks for jest.config.*, vitest.config.*, pytest.ini, conftest.py, _test.go files",
+        "Criterion: Test files exist - globs for **/*.test.*, **/*.spec.*, **/test_*.py, **/*_test.go",
+        "Criterion: Test script defined - checks 'test' script in package.json, 'test' target in Makefile",
+        "Criterion: Coverage configured - checks for coverage config in jest/vitest config, .coveragerc, coverage in CI",
+        "Criterion: E2E/integration tests - checks for playwright.config.*, cypress.config.*, e2e/ or integration/ directories",
+        "Each criterion returns pass/fail with message",
+        "Level assignments: framework=L2, test files=L2, test script=L2, coverage=L4, e2e=L4",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Implement Documentation & Context pillar criteria",
+      "description": "As a developer, I need static checks for documentation: README, CONTRIBUTING, API docs, CODEOWNERS, AI context files.",
+      "acceptanceCriteria": [
+        "src/pillars/documentation.ts exports a Pillar definition with id 'documentation'",
+        "Criterion: README exists and is substantive - checks README.md exists and has >500 characters",
+        "Criterion: CONTRIBUTING guide exists - checks for CONTRIBUTING.md or docs/contributing*",
+        "Criterion: API documentation - checks for openapi.*, swagger.*, docs/api*, jsdoc.json, typedoc.json",
+        "Criterion: CODEOWNERS - checks for CODEOWNERS or .github/CODEOWNERS",
+        "Criterion: AI context files - checks for CLAUDE.md, .cursor/rules, .cursorrules, .github/copilot-instructions.md, .ai-instructions*",
+        "Criterion: Architecture docs - checks for docs/architecture*, docs/adr/*, ARCHITECTURE.md (level 4)",
+        "Level assignments: README=L1, CONTRIBUTING=L2, API docs=L3, CODEOWNERS=L3, AI context=L3, architecture=L4",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "README quality (LLM-evaluated) and inline docs quality (LLM-evaluated) will be added in a later story."
+    },
+    {
+      "id": "US-010",
+      "title": "Implement Development Environment pillar criteria",
+      "description": "As a developer, I need static checks for reproducible dev setup: lock files, docker, env example, setup scripts, version pinning.",
+      "acceptanceCriteria": [
+        "src/pillars/dev-environment.ts exports a Pillar definition with id 'dev-environment'",
+        "Criterion: Lock file exists - checks for package-lock.json, bun.lockb, yarn.lock, pnpm-lock.yaml, poetry.lock, Pipfile.lock, go.sum, Cargo.lock",
+        "Criterion: Containerization - checks for Dockerfile, docker-compose.yml, .devcontainer/",
+        "Criterion: Env documentation - checks for .env.example, .env.template, .env.sample",
+        "Criterion: Setup script - checks for Makefile with setup/install target, scripts/setup*, package.json scripts with setup/dev",
+        "Criterion: Runtime version pinned - checks for .nvmrc, .node-version, .python-version, .tool-versions, .mise.toml, go.mod go version",
+        "Level assignments: lock file=L1, container=L3, env docs=L2, setup script=L2, version pin=L2",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Implement CI/CD & Automation pillar criteria",
+      "description": "As a developer, I need static checks for automated pipelines: CI config, tests in CI, linting in CI, build step, deploy.",
+      "acceptanceCriteria": [
+        "src/pillars/ci-cd.ts exports a Pillar definition with id 'ci-cd'",
+        "Criterion: CI configuration exists - checks for .github/workflows/*.yml, .gitlab-ci.yml, .circleci/config.yml, Jenkinsfile, .travis.yml, bitbucket-pipelines.yml",
+        "Criterion: CI runs tests - parses CI config files looking for test/jest/vitest/pytest commands",
+        "Criterion: CI runs linters - parses CI config files looking for lint/eslint/biome/ruff commands",
+        "Criterion: Build step automated - checks for build script in package.json or build commands in CI",
+        "Criterion: Deploy pipeline - checks for deploy stages/jobs in CI or dedicated deploy config files",
+        "Criterion: Branch protection documented - checks for branch protection rules in .github/ or CONTRIBUTING.md mentions",
+        "Level assignments: CI exists=L2, tests in CI=L3, linters in CI=L3, build=L3, deploy=L4, branch protection=L4",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Implement Code Health pillar criteria",
+      "description": "As a developer, I need static checks for code quality signals: dependency freshness, vulnerabilities, dead code detection.",
+      "acceptanceCriteria": [
+        "src/pillars/code-health.ts exports a Pillar definition with id 'code-health'",
+        "Criterion: No critically outdated deps - if package.json exists, check that it has recent dependency versions (heuristic based on lock file age or known major versions)",
+        "Criterion: Dead code detection configured - checks for knip.json, .deadcode*, unused-exports in eslint config",
+        "Criterion: Bundle analysis configured - checks for webpack-bundle-analyzer, @next/bundle-analyzer, or similar in deps",
+        "Level assignments: outdated deps=L3, dead code=L4, bundle analysis=L5",
+        "Each criterion returns descriptive message",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "LLM-evaluated criteria (file sizes, code structure) will be added in a later story."
+    },
+    {
+      "id": "US-013",
+      "title": "Implement Security & Governance pillar criteria",
+      "description": "As a developer, I need static checks for security practices: security scanning, secrets detection, license, SECURITY.md, dep update automation.",
+      "acceptanceCriteria": [
+        "src/pillars/security.ts exports a Pillar definition with id 'security'",
+        "Criterion: Security scanning configured - checks for .github/workflows with codeql/snyk/trivy/semgrep, or snyk config, or .github/dependabot.yml with security updates",
+        "Criterion: Secrets detection - checks for .gitleaks.toml, .pre-commit-config.yaml with detect-secrets/gitleaks, .gitguardian.yml",
+        "Criterion: License file exists - checks for LICENSE, LICENSE.md, LICENSE.txt",
+        "Criterion: Security policy - checks for SECURITY.md or .github/SECURITY.md",
+        "Criterion: Dependency update automation - checks for .github/dependabot.yml, renovate.json, .renovaterc",
+        "Level assignments: license=L1, security scanning=L4, secrets detection=L4, security policy=L3, dep updates=L3",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Build recommendation engine",
+      "description": "As a developer, I need the engine that generates prioritized, actionable recommendations from failed criteria results.",
+      "acceptanceCriteria": [
+        "src/engine/recommender.ts exports generateRecommendations(results, pillarScores, currentLevel): Recommendation[]",
+        "Recommendation type has: title, description (what to do), reason (why it matters), effort ('low'|'medium'|'high'), impact ('high'|'medium'|'low'), pillarId, criterionId",
+        "Recommendations are sorted by: criteria from next level first, then by impact (high to low), then by effort (low to high)",
+        "Maximum 10 recommendations returned",
+        "Each recommendation includes a concrete actionable description (not vague)",
+        "Recommendations for the next reachable level are prioritized over higher levels",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Build TUI renderer - header and overall level display",
+      "description": "As a developer, I need the top section of the terminal report: header with repo name, large styled level badge, and overall score with progress bar.",
+      "acceptanceCriteria": [
+        "src/renderer/index.ts exports renderReport(data: ReportData, options: RenderOptions): void",
+        "Renders a styled header box with 'Kodus Agent Readiness' title and repo name",
+        "Shows current maturity level with large styled indicator (e.g. box with 'LEVEL 3 - Structured')",
+        "Level indicator uses color: L1=red, L2=yellow, L3=green, L4=blue, L5=magenta",
+        "Shows overall percentage score with a colored progress bar (█ characters)",
+        "Shows progress to next level: 'X more criteria to reach Level N'",
+        "Uses chalk/picocolors for colors, boxen for boxes",
+        "Output is visually attractive with proper spacing and alignment",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Install chalk, boxen as dependencies. Focus on visual quality."
+    },
+    {
+      "id": "US-016",
+      "title": "Build TUI renderer - pillar summary grid",
+      "description": "As a developer, I need the pillar summary section showing a grid/table of all pillars with their individual scores.",
+      "acceptanceCriteria": [
+        "Renders below the header section",
+        "Shows each pillar as a row with: icon (emoji), name, score bar, percentage, pass count (e.g. '7/10')",
+        "Score bars use colored █ blocks: green >=80%, yellow >=50%, red <50%",
+        "Pillars are visually separated with clean alignment",
+        "Uses cli-table3 or manual padding for aligned columns",
+        "Section has a clear title like 'Pillar Scores'",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "Install cli-table3 as dependency if needed."
+    },
+    {
+      "id": "US-017",
+      "title": "Build TUI renderer - detailed pillar breakdown",
+      "description": "As a developer, I need the detailed breakdown section showing every criterion per pillar with pass/fail status.",
+      "acceptanceCriteria": [
+        "Renders after the pillar summary grid",
+        "Each pillar has a subsection with its name and icon as header",
+        "Each criterion shows: pass/fail icon (green checkmark or red X), criterion name, status message",
+        "Failed criteria show the failure reason in dimmed/gray text below",
+        "Skipped criteria (LLM) show a skip icon with 'requires --ai flag' note",
+        "Clear visual separation between pillars (horizontal line or spacing)",
+        "Section has a clear title like 'Detailed Results'",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Build TUI renderer - recommendations section",
+      "description": "As a developer, I need the recommendations section at the bottom of the report with prioritized, actionable suggestions.",
+      "acceptanceCriteria": [
+        "Renders after the detailed breakdown",
+        "Section title: 'Top Recommendations' styled as a header",
+        "Each recommendation shows: priority number, title in bold, description, pillar tag, effort badge (low=green, medium=yellow, high=red)",
+        "Recommendations are numbered 1 through N",
+        "Each recommendation shows why it matters in dimmed text",
+        "Visual separation between recommendations",
+        "If no recommendations (all passing), shows a congratulatory message",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Wire main orchestrator - CLI to report end-to-end",
+      "description": "As a developer, I need the main flow wired together: CLI parses args, detector runs, engine analyzes, scorer scores, renderer displays.",
+      "acceptanceCriteria": [
+        "src/cli/index.ts run() function orchestrates the full pipeline",
+        "Flow: parse args -> detect project -> load pillars -> run analysis -> calculate scores -> calculate level -> generate recommendations -> render report",
+        "Shows spinner during analysis phase with current pillar name",
+        "Running 'bun run src/index.ts' in any repo produces a complete report",
+        "Running 'bun run src/index.ts /path/to/repo' works for external repos",
+        "Exit code 0 on success",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "Install ora or nanospinner for spinner. This is the integration story that ties everything together."
+    },
+    {
+      "id": "US-020",
+      "title": "Add CI output mode and JSON format",
+      "description": "As a developer, I want --ci mode for clean non-interactive output and --format json for programmatic consumption.",
+      "acceptanceCriteria": [
+        "When --ci flag is set or CI=true env var is detected, disable spinners and animations",
+        "CI mode outputs plain text with pass/fail indicators (no color by default)",
+        "When --format json is used, output entire report as structured JSON to stdout",
+        "JSON format includes: level, overallScore, pillarScores array, results array, recommendations array",
+        "When --min-level N is set and current level < N, exit with code 1",
+        "Respects NO_COLOR env var and --no-color flag",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Add LLM client for subjective criteria evaluation",
+      "description": "As a developer, I need an OpenAI-compatible API client that can evaluate subjective criteria like documentation quality and code structure.",
+      "acceptanceCriteria": [
+        "src/engine/llm-client.ts exports LLMClient class",
+        "LLMClient accepts apiKey and optional baseUrl for OpenAI-compatible APIs",
+        "LLMClient.evaluate(prompt, context) sends a request and returns structured JSON result",
+        "Uses JSON mode / structured output for consistent scoring",
+        "Handles API errors gracefully (returns skipped result, does not throw)",
+        "Supports KODUS_API_KEY, OPENAI_API_KEY env vars, and --api-key flag (in that order)",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": "Use fetch (built into Bun) for HTTP requests. No additional HTTP library needed."
+    },
+    {
+      "id": "US-022",
+      "title": "Add LLM-powered criteria to Documentation and Code Health pillars",
+      "description": "As a developer, I need LLM-evaluated criteria for README quality, inline documentation quality, and code structure assessment.",
+      "acceptanceCriteria": [
+        "Documentation pillar gets new criterion: README quality (LLM evaluates completeness, clarity, sections) with requiresLLM=true",
+        "Documentation pillar gets new criterion: Inline documentation quality (LLM samples 5 source files and evaluates comment quality) with requiresLLM=true",
+        "Code Health pillar gets new criterion: Code structure consistency (LLM evaluates folder structure and naming patterns) with requiresLLM=true",
+        "Code Health pillar gets new criterion: File/function size reasonableness (LLM samples files for excessive length) with requiresLLM=true",
+        "All LLM criteria are level 4 or 5",
+        "All LLM criteria pass LLMClient to their check function",
+        "When --ai flag is not set, these show as 'skipped' in the report",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Add config file support",
+      "description": "As a developer, I want to load .agent-readiness.json or .agent-readiness.yaml config files to customize evaluation.",
+      "acceptanceCriteria": [
+        "src/engine/config.ts exports loadConfig(repoPath) that reads config from repo root",
+        "Supports .agent-readiness.json and .agent-readiness.yaml (JSON takes precedence)",
+        "Config allows: disabling specific pillars by id, disabling specific criteria by id, setting custom level thresholds",
+        "Missing config file means all defaults (all pillars, all criteria, 80% threshold)",
+        "When --init flag is passed, generates a default .agent-readiness.json in the repo root and exits",
+        "Generated config includes comments explaining each option",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": "Install yaml package as dependency for YAML parsing."
+    },
+    {
+      "id": "US-024",
+      "title": "Add monorepo support with per-app evaluation",
+      "description": "As a developer working in a monorepo, I want per-app/package scores in addition to repo-wide scores.",
+      "acceptanceCriteria": [
+        "When monorepo is detected, analysis runs repo-scoped criteria once (CODEOWNERS, CI, license)",
+        "App-scoped criteria (linters, tests, types, coverage) run per detected package",
+        "Report shows repo-wide score AND per-app breakdown",
+        "Per-app section shows app name/path with its individual pillar scores",
+        "Summary line shows aggregation like '3/4 apps have linters configured'",
+        "Monorepo mode detects apps from workspace config (package.json workspaces, pnpm-workspace.yaml, etc.)",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": "This extends the existing analysis engine and renderer. Make sure repo-scoped vs app-scoped is properly separated."
+    }
+  ]
+}

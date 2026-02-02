@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/criterionrow.tsx","./src/components/dashboard.tsx","./src/components/header.tsx","./src/components/overallprogress.tsx","./src/components/pillarcard.tsx","./src/components/radarchart.tsx","./src/components/recommendationlist.tsx"],"version":"5.9.3"}
