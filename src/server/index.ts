@@ -1,7 +1,19 @@
 import path from "node:path";
 import type { SerializedReportData } from "../engine/serializer.js";
 
-const DIST_WEB_DIR = path.resolve(import.meta.dir, "../../dist/web");
+function findWebDir(): string {
+  // When bundled: import.meta.dir = .../dist/, web is at dist/web
+  const bundled = path.resolve(import.meta.dir, "web");
+  // When running from source: import.meta.dir = .../src/server/, web is at ../../dist/web
+  const source = path.resolve(import.meta.dir, "../../dist/web");
+
+  const fs = require("node:fs");
+  if (fs.existsSync(bundled)) return bundled;
+  if (fs.existsSync(source)) return source;
+  return bundled; // fallback for error message
+}
+
+const DIST_WEB_DIR = findWebDir();
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
