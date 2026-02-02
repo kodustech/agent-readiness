@@ -1,18 +1,26 @@
 {
-  "name": "kodus-agent-readiness",
+  "name": "@kodus/agent-readiness",
   "version": "0.1.0",
   "description": "Evaluate how prepared your codebase is for autonomous AI coding agents",
   "type": "module",
   "bin": {
-    "kodus-agent-readiness": "./src/index.ts"
+    "agent-readiness": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "bun run src/index.ts",
     "typecheck": "bun x tsc --noEmit",
     "lint": "bun x biome check src/",
     "build": "bun build src/index.ts --outdir dist --target node",
     "build:web": "cd web && bun install && bun run build",
+    "build:all": "bun run build && bun run build:web",
+    "prepublishOnly": "bun run build:all",
     "dev:web": "cd web && bun install && bun run dev"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "ai",
@@ -23,6 +31,9 @@
     "cli",
     "kodus"
   ],
+  "engines": {
+    "bun": ">=1.0.0"
+  },
   "license": "MIT",
   "dependencies": {
     "chalk": "^5.4.1",
