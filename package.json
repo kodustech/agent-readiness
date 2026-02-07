@@ -10,6 +10,7 @@
     "dist"
   ],
   "scripts": {
+    "test": "bun test",
     "dev": "bun run src/index.ts",
     "typecheck": "bun x tsc --noEmit",
     "lint": "bun x biome check src/",
