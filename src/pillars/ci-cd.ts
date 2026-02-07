@@ -93,7 +93,7 @@ const ciCd: Pillar = {
         }
 
         const testPatterns =
-          /\b(npm\s+test|yarn\s+test|pnpm\s+test|bun\s+test|jest|vitest|pytest|go\s+test|make\s+test|npm\s+run\s+test)\b/i;
+          /\b(npm\s+test|yarn\s+test|pnpm\s+test|bun\s+test|jest|vitest|pytest|go\s+test|make\s+test|npm\s+run\s+test|gradle\s+test|\.\/gradlew\s+test|gradlew\s+test|gradle\s+check|\.\/gradlew\s+check|mvn\s+test|\.\/mvnw\s+test|mvn\s+verify|\.\/mvnw\s+verify|cargo\s+test)\b/i;
 
         for (const { file, content } of configs) {
           if (testPatterns.test(content)) {
@@ -133,7 +133,7 @@ const ciCd: Pillar = {
         }
 
         const lintPatterns =
-          /\b(npm\s+run\s+lint|yarn\s+lint|pnpm\s+lint|bun\s+run\s+lint|eslint|biome\s+check|biome\s+lint|ruff\s+check|ruff\s+lint|golangci-lint|make\s+lint)\b/i;
+          /\b(npm\s+run\s+lint|yarn\s+lint|pnpm\s+lint|bun\s+run\s+lint|eslint|biome\s+check|biome\s+lint|ruff\s+check|ruff\s+lint|golangci-lint|make\s+lint|gradle\s+ktlintCheck|\.\/gradlew\s+ktlintCheck|gradle\s+detekt|\.\/gradlew\s+detekt|gradle\s+ktfmtCheck|\.\/gradlew\s+ktfmtCheck|\.\/gradlew\s+spotlessCheck|gradle\s+spotlessCheck|mvn\s+checkstyle|\.\/mvnw\s+checkstyle|mvn\s+pmd|cargo\s+clippy|cargo\s+fmt\s+--check)\b/i;
 
         for (const { file, content } of configs) {
           if (lintPatterns.test(content)) {
@@ -179,7 +179,7 @@ const ciCd: Pillar = {
         // Check CI configs for build commands
         const configs = await getCIConfigContents(repoPath);
         const buildPatterns =
-          /\b(npm\s+run\s+build|yarn\s+build|pnpm\s+build|bun\s+run\s+build|make\s+build|go\s+build|cargo\s+build|docker\s+build)\b/i;
+          /\b(npm\s+run\s+build|yarn\s+build|pnpm\s+build|bun\s+run\s+build|make\s+build|go\s+build|cargo\s+build|docker\s+build|gradle\s+build|\.\/gradlew\s+build|gradle\s+assemble|\.\/gradlew\s+assemble|mvn\s+package|mvn\s+install|\.\/mvnw\s+package|\.\/mvnw\s+install|mvn\s+compile|python\s+-m\s+build|poetry\s+build)\b/i;
 
         for (const { file, content } of configs) {
           if (buildPatterns.test(content)) {

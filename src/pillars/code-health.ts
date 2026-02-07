@@ -24,22 +24,19 @@ const codeHealth: Pillar = {
       level: 3,
       requiresLLM: false,
       check: async (repoPath, _projectInfo) => {
-        const pkgFound = await fileExists(repoPath, "package.json");
-        if (!pkgFound) {
-          return {
-            criterionId: "no-outdated-deps",
-            pass: true,
-            message: "No package.json found; skipping dependency freshness check.",
-            skipped: true,
-          };
-        }
-
-        // Check all common lock files
+        // Check all common lock/build files for freshness
         const lockFiles = [
           "package-lock.json",
           "bun.lockb",
           "yarn.lock",
           "pnpm-lock.yaml",
+          "gradle.lockfile",
+          "build.gradle.kts",
+          "build.gradle",
+          "poetry.lock",
+          "Pipfile.lock",
+          "go.sum",
+          "Cargo.lock",
         ];
 
         for (const lockFile of lockFiles) {
@@ -51,14 +48,14 @@ const codeHealth: Pillar = {
               return {
                 criterionId: "no-outdated-deps",
                 pass: true,
-                message: `Lock file ${lockFile} was modified ${daysAgo} day(s) ago`,
+                message: `${lockFile} was modified ${daysAgo} day(s) ago`,
               };
             } else {
               const monthsAgo = Math.round(ageMs / (30 * 24 * 60 * 60 * 1000));
               return {
                 criterionId: "no-outdated-deps",
                 pass: false,
-                message: `Lock file ${lockFile} was last modified ~${monthsAgo} month(s) ago`,
+                message: `${lockFile} was last modified ~${monthsAgo} month(s) ago`,
                 details:
                   "Run dependency updates regularly to avoid security vulnerabilities and incompatibilities.",
               };
@@ -66,10 +63,30 @@ const codeHealth: Pillar = {
           }
         }
 
+        // Check if there's any known project type at all
+        const hasProjectFile = await fileExists(
+          repoPath,
+          "package.json",
+          "build.gradle.kts",
+          "build.gradle",
+          "pom.xml",
+          "pyproject.toml",
+          "go.mod",
+          "Cargo.toml",
+        );
+        if (!hasProjectFile) {
+          return {
+            criterionId: "no-outdated-deps",
+            pass: true,
+            message: "No recognized project manifest found; skipping dependency freshness check.",
+            skipped: true,
+          };
+        }
+
         return {
           criterionId: "no-outdated-deps",
           pass: false,
-          message: "package.json found but no lock file detected.",
+          message: "Project manifest found but no lock file or recent build file detected.",
           details:
             "Add and commit a lock file to track dependency versions.",
         };
@@ -107,6 +124,69 @@ const codeHealth: Pillar = {
             criterionId: "dead-code-detection",
             pass: true,
             message: `Dead code detection configured: ${deadcodeFound}`,
+          };
+        }
+
+        // Check for detekt with UnusedPrivateMember rule (Kotlin dead code detection)
+        const detektConfigFiles = ["detekt.yml", ".detekt.yml", "detekt-config.yml"];
+        for (const detektFile of detektConfigFiles) {
+          const detektContent = await readFileContent(repoPath, detektFile);
+          if (detektContent && detektContent.includes("UnusedPrivateMember")) {
+            return {
+              criterionId: "dead-code-detection",
+              pass: true,
+              message: `detekt UnusedPrivateMember rule found in ${detektFile}`,
+            };
+          }
+        }
+
+        // Check build.gradle.kts or build.gradle for detekt (which has dead code rules by default)
+        for (const gradleFile of ["build.gradle.kts", "build.gradle"]) {
+          const gradleContent = await readFileContent(repoPath, gradleFile);
+          if (gradleContent && gradleContent.includes("detekt")) {
+            return {
+              criterionId: "dead-code-detection",
+              pass: true,
+              message: `detekt configured in ${gradleFile} (includes dead code detection)`,
+            };
+          }
+        }
+
+        // Check for Python vulture (dead code detection)
+        const pyprojectDC = await readFileContent(repoPath, "pyproject.toml");
+        if (pyprojectDC && pyprojectDC.includes("vulture")) {
+          return {
+            criterionId: "dead-code-detection",
+            pass: true,
+            message: "vulture dead code detection found in pyproject.toml",
+          };
+        }
+        const vultureConfig = await fileExists(repoPath, ".vulture_whitelist.py", "vulture_whitelist.py");
+        if (vultureConfig) {
+          return {
+            criterionId: "dead-code-detection",
+            pass: true,
+            message: `vulture whitelist found: ${vultureConfig}`,
+          };
+        }
+
+        // Check for Rust cargo-udeps (unused dependencies)
+        const cargoTomlDC = await readFileContent(repoPath, "Cargo.toml");
+        if (cargoTomlDC && cargoTomlDC.includes("cargo-udeps")) {
+          return {
+            criterionId: "dead-code-detection",
+            pass: true,
+            message: "cargo-udeps configured in Cargo.toml",
+          };
+        }
+
+        // Check pom.xml for SpotBugs (Java dead code detection)
+        const pomXmlDC = await readFileContent(repoPath, "pom.xml");
+        if (pomXmlDC && (pomXmlDC.includes("spotbugs") || pomXmlDC.includes("findbugs"))) {
+          return {
+            criterionId: "dead-code-detection",
+            pass: true,
+            message: "SpotBugs/FindBugs found in pom.xml (includes dead code detection)",
           };
         }
 

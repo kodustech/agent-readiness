@@ -29,6 +29,9 @@ const styleLinting: Pillar = {
           "ruff.toml",
           ".golangci.yml",
           ".golangci.yaml",
+          "detekt.yml",
+          ".detekt.yml",
+          "detekt-config.yml",
         );
         if (found) {
           return {
@@ -37,12 +40,68 @@ const styleLinting: Pillar = {
             message: `Linter configuration found: ${found}`,
           };
         }
+
+        // Check for Kotlin/Java linters in build.gradle.kts or build.gradle
+        for (const gradleFile of ["build.gradle.kts", "build.gradle"]) {
+          const gradleContent = await readFileContent(repoPath, gradleFile);
+          if (gradleContent) {
+            if (gradleContent.includes("detekt")) {
+              return { criterionId: "linter", pass: true, message: `detekt linter configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("ktlint")) {
+              return { criterionId: "linter", pass: true, message: `ktlint linter configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("checkstyle")) {
+              return { criterionId: "linter", pass: true, message: `Checkstyle configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("pmd")) {
+              return { criterionId: "linter", pass: true, message: `PMD configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("spotbugs")) {
+              return { criterionId: "linter", pass: true, message: `SpotBugs configured in ${gradleFile}` };
+            }
+          }
+        }
+
+        // Check Java Checkstyle/PMD config files
+        const javaLinterFound = await fileExists(
+          repoPath,
+          "checkstyle.xml",
+          ".checkstyle",
+          "pmd.xml",
+          ".pmd",
+          "spotbugs-exclude.xml",
+        );
+        if (javaLinterFound) {
+          return { criterionId: "linter", pass: true, message: `Java linter configuration found: ${javaLinterFound}` };
+        }
+
+        // Check pom.xml for Java linter plugins
+        const pomXml = await readFileContent(repoPath, "pom.xml");
+        if (pomXml) {
+          if (pomXml.includes("checkstyle") || pomXml.includes("maven-pmd-plugin") || pomXml.includes("spotbugs")) {
+            return { criterionId: "linter", pass: true, message: "Java linter plugin found in pom.xml" };
+          }
+        }
+
+        // Check for Rust clippy config
+        const clippyFound = await fileExists(repoPath, "clippy.toml", ".clippy.toml");
+        if (clippyFound) {
+          return { criterionId: "linter", pass: true, message: `Clippy configuration found: ${clippyFound}` };
+        }
+
+        // Rust projects with Cargo.toml have clippy built-in
+        const cargoFound = await fileExists(repoPath, "Cargo.toml");
+        if (cargoFound) {
+          return { criterionId: "linter", pass: true, message: "Rust project detected (clippy is built-in via cargo clippy)" };
+        }
+
         return {
           criterionId: "linter",
           pass: false,
           message: "No linter configuration found.",
           details:
-            "Add ESLint, Biome, Ruff, or golangci-lint configuration to enforce code quality.",
+            "Add ESLint, Biome, Ruff, golangci-lint, detekt, ktlint, Checkstyle, or clippy configuration to enforce code quality.",
         };
       },
     },
@@ -108,12 +167,54 @@ const styleLinting: Pillar = {
           }
         }
 
+        // Go has gofmt built-in
+        if (_projectInfo.detectedTypes.includes("go")) {
+          return { criterionId: "formatter", pass: true, message: "Go has built-in formatting via gofmt/goimports" };
+        }
+
+        // Rust: check for rustfmt config
+        const rustfmtFound = await fileExists(repoPath, "rustfmt.toml", ".rustfmt.toml");
+        if (rustfmtFound) {
+          return { criterionId: "formatter", pass: true, message: `Rust formatter configuration found: ${rustfmtFound}` };
+        }
+        // Rust projects have rustfmt built-in
+        if (_projectInfo.detectedTypes.includes("rust")) {
+          return { criterionId: "formatter", pass: true, message: "Rust project detected (rustfmt is built-in via cargo fmt)" };
+        }
+
+        // Check Gradle files for Kotlin/Java formatters (ktlint, ktfmt, spotless, google-java-format)
+        for (const gradleFile of ["build.gradle.kts", "build.gradle"]) {
+          const gradleContent = await readFileContent(repoPath, gradleFile);
+          if (gradleContent) {
+            if (gradleContent.includes("ktlint") || gradleContent.includes("org.jlleitschuh.gradle.ktlint")) {
+              return { criterionId: "formatter", pass: true, message: `ktlint formatter configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("ktfmt")) {
+              return { criterionId: "formatter", pass: true, message: `ktfmt formatter configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("spotless")) {
+              return { criterionId: "formatter", pass: true, message: `Spotless formatter configured in ${gradleFile}` };
+            }
+            if (gradleContent.includes("google-java-format")) {
+              return { criterionId: "formatter", pass: true, message: `google-java-format configured in ${gradleFile}` };
+            }
+          }
+        }
+
+        // Check pom.xml for Java formatters
+        const pomXmlFmt = await readFileContent(repoPath, "pom.xml");
+        if (pomXmlFmt) {
+          if (pomXmlFmt.includes("spotless") || pomXmlFmt.includes("google-java-format") || pomXmlFmt.includes("formatter-maven-plugin")) {
+            return { criterionId: "formatter", pass: true, message: "Java formatter plugin found in pom.xml" };
+          }
+        }
+
         return {
           criterionId: "formatter",
           pass: false,
           message: "No formatter configuration found.",
           details:
-            "Add Prettier, Biome, Black, or Ruff configuration to enforce consistent code formatting.",
+            "Add Prettier, Biome, Black, Ruff, ktlint, ktfmt, Spotless, google-java-format, or rustfmt to enforce consistent code formatting.",
         };
       },
     },
@@ -126,6 +227,19 @@ const styleLinting: Pillar = {
       level: 3,
       requiresLLM: false,
       check: async (repoPath, _projectInfo) => {
+        // Statically typed languages get auto-pass
+        const staticLangs: [string, string][] = [
+          ["kotlin", "Kotlin has a built-in static type system with null safety"],
+          ["go", "Go has a built-in static type system"],
+          ["java", "Java has a built-in static type system"],
+          ["rust", "Rust has a built-in static type system with ownership model"],
+        ];
+        for (const [lang, msg] of staticLangs) {
+          if (_projectInfo.detectedTypes.includes(lang)) {
+            return { criterionId: "type-checker", pass: true, message: msg };
+          }
+        }
+
         // Check tsconfig.json with strict: true
         const tsconfig = await readFileContent(repoPath, "tsconfig.json");
         if (tsconfig) {
@@ -279,7 +393,7 @@ const styleLinting: Pillar = {
         }
 
         const srcFiles = await fg(
-          ["**/*.{ts,tsx,js,jsx,py,go,rs}", "!node_modules/**", "!vendor/**", "!dist/**"],
+          ["**/*.{ts,tsx,js,jsx,py,go,rs,kt,kts,java}", "!node_modules/**", "!vendor/**", "!dist/**", "!build/**", "!target/**"],
           { cwd: repoPath, absolute: false },
         );
 
