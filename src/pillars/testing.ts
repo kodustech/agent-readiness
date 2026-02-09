@@ -61,12 +61,101 @@ const testing: Pillar = {
           };
         }
 
+        // Check for Kotlin test frameworks in build.gradle.kts
+        const buildGradleKts = await readFileContent(repoPath, "build.gradle.kts");
+        if (buildGradleKts) {
+          if (buildGradleKts.includes("kotest")) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Kotest framework found in build.gradle.kts",
+            };
+          }
+          if (
+            buildGradleKts.includes("junit") ||
+            buildGradleKts.includes("jupiter") ||
+            buildGradleKts.includes("kotlin.test") ||
+            buildGradleKts.includes("kotlin(\"test\")")
+          ) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Kotlin/JUnit test framework found in build.gradle.kts",
+            };
+          }
+          if (buildGradleKts.includes("testImplementation")) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Test dependencies found in build.gradle.kts",
+            };
+          }
+        }
+
+        // Check build.gradle (Groovy DSL) for Java/Kotlin test deps
+        const buildGradle = await readFileContent(repoPath, "build.gradle");
+        if (buildGradle) {
+          if (
+            buildGradle.includes("junit") ||
+            buildGradle.includes("jupiter") ||
+            buildGradle.includes("kotest") ||
+            buildGradle.includes("kotlin.test") ||
+            buildGradle.includes("testng") ||
+            buildGradle.includes("testImplementation")
+          ) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Test framework found in build.gradle",
+            };
+          }
+        }
+
+        // Check pom.xml for Java test frameworks
+        const pomXml = await readFileContent(repoPath, "pom.xml");
+        if (pomXml) {
+          if (pomXml.includes("junit") || pomXml.includes("testng") || pomXml.includes("jupiter")) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Java test framework found in pom.xml",
+            };
+          }
+        }
+
+        // Check for Rust tests (built-in #[test] support, check for tests/ dir or Cargo.toml)
+        const cargoToml = await readFileContent(repoPath, "Cargo.toml");
+        if (cargoToml) {
+          // Rust has built-in testing; check for tests dir or dev-dependencies
+          const testsDir = await fileExists(repoPath, "tests");
+          if (testsDir) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Rust integration tests directory found (tests/)",
+            };
+          }
+          if (cargoToml.includes("[dev-dependencies]")) {
+            return {
+              criterionId: "test-framework",
+              pass: true,
+              message: "Rust dev-dependencies found in Cargo.toml (built-in #[test] support)",
+            };
+          }
+          // Rust always has built-in test support
+          return {
+            criterionId: "test-framework",
+            pass: true,
+            message: "Rust project detected (built-in #[test] framework)",
+          };
+        }
+
         return {
           criterionId: "test-framework",
           pass: false,
           message: "No test framework configuration found.",
           details:
-            "Set up Jest, Vitest, pytest, or Go testing to enable automated testing.",
+            "Set up Jest, Vitest, pytest, Go testing, JUnit, Kotest, or cargo test to enable automated testing.",
         };
       },
     },
@@ -85,11 +174,21 @@ const testing: Pillar = {
             "**/*.spec.*",
             "**/test_*.py",
             "**/*_test.go",
+            "**/*Test.kt",
+            "**/*Tests.kt",
+            "**/*Spec.kt",
+            "src/test/**/*.kt",
+            "**/*Test.java",
+            "**/*Tests.java",
+            "src/test/**/*.java",
+            "tests/**/*.rs",
+            "src/**/tests.rs",
+            "src/**/test_*.rs",
           ],
           {
             cwd: repoPath,
             absolute: false,
-            ignore: ["node_modules/**", "vendor/**", "dist/**", ".next/**"],
+            ignore: ["node_modules/**", "vendor/**", "dist/**", ".next/**", "build/**", "target/**"],
           },
         );
         if (testFiles.length > 0) {
@@ -105,7 +204,7 @@ const testing: Pillar = {
           pass: false,
           message: "No test files found.",
           details:
-            "Add test files following naming conventions: *.test.ts, *.spec.ts, test_*.py, *_test.go.",
+            "Add test files following naming conventions: *.test.ts, test_*.py, *_test.go, *Test.kt, *Test.java, tests/*.rs.",
         };
       },
     },
@@ -140,12 +239,62 @@ const testing: Pillar = {
           };
         }
 
+        // Check for Gradle wrapper (gradlew) which provides ./gradlew test
+        const gradlewFound = await fileExists(repoPath, "gradlew");
+        if (gradlewFound) {
+          return {
+            criterionId: "test-script",
+            pass: true,
+            message: "Gradle wrapper found (provides ./gradlew test)",
+          };
+        }
+
+        // Check for build.gradle.kts or build.gradle (Gradle projects have built-in test task)
+        const gradleBuildFound = await fileExists(repoPath, "build.gradle.kts", "build.gradle");
+        if (gradleBuildFound) {
+          return {
+            criterionId: "test-script",
+            pass: true,
+            message: "Gradle build file found (provides gradle test task)",
+          };
+        }
+
+        // Check for Maven wrapper (mvnw)
+        const mvnwFound = await fileExists(repoPath, "mvnw");
+        if (mvnwFound) {
+          return {
+            criterionId: "test-script",
+            pass: true,
+            message: "Maven wrapper found (provides ./mvnw test)",
+          };
+        }
+
+        // Check for pom.xml (Maven projects have built-in test phase)
+        const pomFound = await fileExists(repoPath, "pom.xml");
+        if (pomFound) {
+          return {
+            criterionId: "test-script",
+            pass: true,
+            message: "Maven pom.xml found (provides mvn test phase)",
+          };
+        }
+
+        // Check for Cargo.toml (Rust projects have built-in cargo test)
+        const cargoFound = await fileExists(repoPath, "Cargo.toml");
+        if (cargoFound) {
+          return {
+            criterionId: "test-script",
+            pass: true,
+            message: "Cargo.toml found (provides cargo test)",
+          };
+        }
+
         return {
           criterionId: "test-script",
           pass: false,
           message: "No test script or target found.",
           details:
-            'Add a "test" script in package.json or a "test" target in Makefile.',
+            'Add a "test" script in package.json, Makefile, Gradle, Maven, or Cargo.',
         };
       },
     },
@@ -199,6 +348,63 @@ const testing: Pillar = {
           }
         }
 
+        // Check build.gradle.kts for JaCoCo or Kover coverage
+        const buildGradleKtsCov = await readFileContent(repoPath, "build.gradle.kts");
+        if (buildGradleKtsCov) {
+          if (buildGradleKtsCov.includes("jacoco")) {
+            return {
+              criterionId: "coverage-config",
+              pass: true,
+              message: "JaCoCo coverage plugin configured in build.gradle.kts",
+            };
+          }
+          if (buildGradleKtsCov.includes("kover") || buildGradleKtsCov.includes("kotlinx-kover")) {
+            return {
+              criterionId: "coverage-config",
+              pass: true,
+              message: "Kover coverage plugin configured in build.gradle.kts",
+            };
+          }
+        }
+
+        // Check build.gradle (Groovy) for JaCoCo
+        const buildGradleCov = await readFileContent(repoPath, "build.gradle");
+        if (buildGradleCov && buildGradleCov.includes("jacoco")) {
+          return {
+            criterionId: "coverage-config",
+            pass: true,
+            message: "JaCoCo coverage plugin configured in build.gradle",
+          };
+        }
+
+        // Check pom.xml for JaCoCo
+        const pomXmlCov = await readFileContent(repoPath, "pom.xml");
+        if (pomXmlCov && pomXmlCov.includes("jacoco")) {
+          return {
+            criterionId: "coverage-config",
+            pass: true,
+            message: "JaCoCo coverage plugin found in pom.xml",
+          };
+        }
+
+        // Check for Rust coverage tools (tarpaulin, llvm-cov)
+        const tarpaulinConfig = await fileExists(repoPath, ".tarpaulin.toml", "tarpaulin.toml");
+        if (tarpaulinConfig) {
+          return {
+            criterionId: "coverage-config",
+            pass: true,
+            message: `Rust tarpaulin coverage configured: ${tarpaulinConfig}`,
+          };
+        }
+        const cargoTomlCov = await readFileContent(repoPath, "Cargo.toml");
+        if (cargoTomlCov && (cargoTomlCov.includes("cargo-tarpaulin") || cargoTomlCov.includes("cargo-llvm-cov"))) {
+          return {
+            criterionId: "coverage-config",
+            pass: true,
+            message: "Rust coverage tool found in Cargo.toml",
+          };
+        }
+
         // Check CI config files for coverage mentions
         const ciFiles = await fg(
           [".github/workflows/*.yml", ".github/workflows/*.yaml"],
@@ -220,7 +426,7 @@ const testing: Pillar = {
           pass: false,
           message: "No coverage configuration found.",
           details:
-            "Configure test coverage reporting in your test framework or CI pipeline.",
+            "Configure test coverage reporting in your test framework, CI pipeline, JaCoCo, or Kover.",
         };
       },
     },
@@ -276,11 +482,11 @@ const testing: Pillar = {
         }
 
         const testFiles = await fg(
-          ["**/*.test.*", "**/*.spec.*", "**/test_*.py", "**/*_test.go"],
+          ["**/*.test.*", "**/*.spec.*", "**/test_*.py", "**/*_test.go", "**/*Test.kt", "**/*Spec.kt", "src/test/**/*.kt", "**/*Test.java", "src/test/**/*.java", "tests/**/*.rs"],
           {
             cwd: repoPath,
             absolute: false,
-            ignore: ["node_modules/**", "vendor/**", "dist/**"],
+            ignore: ["node_modules/**", "vendor/**", "dist/**", "build/**", "target/**"],
           },
         );
 

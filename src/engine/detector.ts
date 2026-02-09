@@ -49,6 +49,7 @@ const TYPE_INDICATORS: TypeIndicator[] = [
   { type: "python", files: ["pyproject.toml", "setup.py", "requirements.txt"] },
   { type: "go", files: ["go.mod"] },
   { type: "rust", files: ["Cargo.toml"] },
+  { type: "kotlin", files: ["build.gradle.kts"] },
   { type: "java", files: ["pom.xml", "build.gradle"] },
 ];
 
@@ -62,6 +63,40 @@ async function detectTypes(repoPath: string): Promise<string[]> {
           detected.push(indicator.type);
         }
         break; // one match per type is enough
+      }
+    }
+  }
+
+  // Additional Kotlin detection: check build.gradle for Kotlin plugins
+  if (!detected.includes("kotlin")) {
+    const buildGradle = path.join(repoPath, "build.gradle");
+    if (await fileExists(buildGradle)) {
+      try {
+        const content = await fs.readFile(buildGradle, "utf-8");
+        if (
+          content.includes("org.jetbrains.kotlin") ||
+          /\bkotlin\s*\(/.test(content) ||
+          /id\s+['"]kotlin/.test(content) ||
+          content.includes("kotlin-android") ||
+          content.includes("kotlin-jvm")
+        ) {
+          detected.push("kotlin");
+        }
+      } catch {
+        // ignore read errors
+      }
+    }
+
+    // Check pom.xml for kotlin-maven-plugin
+    const pomXml = path.join(repoPath, "pom.xml");
+    if (!detected.includes("kotlin") && await fileExists(pomXml)) {
+      try {
+        const content = await fs.readFile(pomXml, "utf-8");
+        if (content.includes("kotlin-maven-plugin") || content.includes("org.jetbrains.kotlin")) {
+          detected.push("kotlin");
+        }
+      } catch {
+        // ignore read errors
       }
     }
   }

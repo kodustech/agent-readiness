@@ -92,12 +92,64 @@ const security: Pillar = {
           };
         }
 
+        // Check build.gradle.kts or build.gradle for OWASP dependency-check plugin
+        for (const gradleFile of ["build.gradle.kts", "build.gradle"]) {
+          const gradleContent = await readFileContent(repoPath, gradleFile);
+          if (gradleContent) {
+            if (
+              gradleContent.includes("org.owasp.dependencycheck") ||
+              gradleContent.includes("dependency-check")
+            ) {
+              return {
+                criterionId: "security-scanning",
+                pass: true,
+                message: `OWASP dependency-check plugin found in ${gradleFile}`,
+              };
+            }
+          }
+        }
+
+        // Check pom.xml for OWASP dependency-check
+        const pomXmlSec = await readFileContent(repoPath, "pom.xml");
+        if (pomXmlSec && (pomXmlSec.includes("dependency-check") || pomXmlSec.includes("owasp"))) {
+          return {
+            criterionId: "security-scanning",
+            pass: true,
+            message: "OWASP dependency-check found in pom.xml",
+          };
+        }
+
+        // Check for Rust cargo-audit
+        const cargoAuditFound = await fileExists(repoPath, ".cargo-audit.toml");
+        if (cargoAuditFound) {
+          return {
+            criterionId: "security-scanning",
+            pass: true,
+            message: "cargo-audit configuration found",
+          };
+        }
+        // Check CI for cargo audit
+        const ciFilesSec = await fg(
+          [".github/workflows/*.yml", ".github/workflows/*.yaml"],
+          { cwd: repoPath, absolute: false, dot: true },
+        );
+        for (const ciFile of ciFilesSec) {
+          const content = await readFileContent(repoPath, ciFile);
+          if (content && /\bcargo[\s-]audit\b/i.test(content)) {
+            return {
+              criterionId: "security-scanning",
+              pass: true,
+              message: `cargo-audit found in CI: ${ciFile}`,
+            };
+          }
+        }
+
         return {
           criterionId: "security-scanning",
           pass: false,
           message: "No security scanning configured in CI.",
           details:
-            "Add CodeQL, Snyk, Trivy, or Semgrep to your CI pipeline for vulnerability scanning.",
+            "Add CodeQL, Snyk, Trivy, Semgrep, OWASP dependency-check, or cargo-audit to your CI pipeline for vulnerability scanning.",
         };
       },
     },
@@ -224,12 +276,30 @@ const security: Pillar = {
             message: `Dependency update automation found: ${found}`,
           };
         }
+
+        // Check build.gradle.kts or build.gradle for Gradle versions plugin
+        for (const gradleFile of ["build.gradle.kts", "build.gradle"]) {
+          const gradleContent = await readFileContent(repoPath, gradleFile);
+          if (gradleContent) {
+            if (
+              gradleContent.includes("com.github.ben-manes.versions") ||
+              gradleContent.includes("version-catalog-update")
+            ) {
+              return {
+                criterionId: "dep-update-automation",
+                pass: true,
+                message: `Gradle versions plugin found in ${gradleFile}`,
+              };
+            }
+          }
+        }
+
         return {
           criterionId: "dep-update-automation",
           pass: false,
           message: "No dependency update automation found.",
           details:
-            "Add Dependabot or Renovate to automatically keep dependencies up to date.",
+            "Add Dependabot, Renovate, or Gradle versions plugin to automatically keep dependencies up to date.",
         };
       },
     },

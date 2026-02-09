@@ -31,6 +31,8 @@ const devEnvironment: Pillar = {
           "Pipfile.lock",
           "go.sum",
           "Cargo.lock",
+          "gradle.lockfile",
+          "gradle/verification-metadata.xml",
         );
         if (found) {
           return {
@@ -148,6 +150,26 @@ const devEnvironment: Pillar = {
           };
         }
 
+        // Check for Gradle wrapper (gradlew) as setup mechanism
+        const gradlewFound = await fileExists(repoPath, "gradlew");
+        if (gradlewFound) {
+          return {
+            criterionId: "setup-script",
+            pass: true,
+            message: "Gradle wrapper (gradlew) found as setup mechanism",
+          };
+        }
+
+        // Check for Maven wrapper (mvnw) as setup mechanism
+        const mvnwFound = await fileExists(repoPath, "mvnw");
+        if (mvnwFound) {
+          return {
+            criterionId: "setup-script",
+            pass: true,
+            message: "Maven wrapper (mvnw) found as setup mechanism",
+          };
+        }
+
         // Check package.json for "dev" script
         const hasDevScript = await packageJsonHas(repoPath, "scripts.dev");
         if (hasDevScript) {
@@ -184,6 +206,11 @@ const devEnvironment: Pillar = {
           ".tool-versions",
           ".mise.toml",
           "go.mod",
+          ".sdkmanrc",
+          ".java-version",
+          "gradle.properties",
+          "rust-toolchain.toml",
+          "rust-toolchain",
         );
         if (found) {
           return {
