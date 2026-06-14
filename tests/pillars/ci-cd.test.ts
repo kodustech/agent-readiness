@@ -107,6 +107,22 @@ describe("ci-runs-linters", () => {
     expect(r.pass).toBe(true);
   });
 
+  test("js: oxlint", async () => {
+    const dir = await make("js-ci-oxlint", {
+      ".github/workflows/ci.yml": "jobs:\n  lint:\n    steps:\n      - run: oxlint src/",
+    });
+    const r = await ciRunsLintersCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: oxfmt --check", async () => {
+    const dir = await make("js-ci-oxfmt", {
+      ".github/workflows/ci.yml": "jobs:\n  lint:\n    steps:\n      - run: oxfmt --check src/",
+    });
+    const r = await ciRunsLintersCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
   test("no CI fails", async () => {
     const dir = await make("ci-lint-empty");
     const r = await ciRunsLintersCheck(dir, mockProjectInfo());

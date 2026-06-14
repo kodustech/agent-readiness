@@ -94,6 +94,33 @@ describe("linter", () => {
     expect(r.pass).toBe(true);
   });
 
+  // oxlint
+  test("js: .oxlintrc.json", async () => {
+    const dir = await make("js-lint-oxlint", { ".oxlintrc.json": '{"rules":{}}' });
+    const r = await linterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: .oxlintrc.jsonc", async () => {
+    const dir = await make("js-lint-oxlint-jsonc", { ".oxlintrc.jsonc": "// oxlint config\n{}" });
+    const r = await linterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: oxlint.config.ts", async () => {
+    const dir = await make("js-lint-oxlint-config-ts", { "oxlint.config.ts": "export default {};" });
+    const r = await linterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: oxlint in package.json script", async () => {
+    const dir = await make("js-lint-oxlint-package", {
+      "package.json": '{"scripts":{"lint":"oxlint --config ./config/oxlint.json src"}}',
+    });
+    const r = await linterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
   // Fail case
   test("empty dir fails", async () => {
     const dir = await make("lint-empty");
@@ -137,6 +164,33 @@ describe("formatter", () => {
   test("swift: .swiftformat", async () => {
     const dir = await make("swift-fmt", { ".swiftformat": "--indent 4" });
     const r = await formatterCheck(dir, mockProjectInfo({ detectedTypes: ["swift"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  // oxfmt
+  test("js: .oxfmtrc.json", async () => {
+    const dir = await make("js-fmt-oxfmt", { ".oxfmtrc.json": '{"printWidth":80}' });
+    const r = await formatterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: .oxfmtrc.jsonc", async () => {
+    const dir = await make("js-fmt-oxfmt-jsonc", { ".oxfmtrc.jsonc": "// oxfmt config\n{}" });
+    const r = await formatterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: oxfmt.config.ts", async () => {
+    const dir = await make("js-fmt-oxfmt-config-ts", { "oxfmt.config.ts": "export default {};" });
+    const r = await formatterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
+    expect(r.pass).toBe(true);
+  });
+
+  test("js: oxfmt in package.json script", async () => {
+    const dir = await make("js-fmt-oxfmt-package", {
+      "package.json": '{"scripts":{"format:check":"oxfmt --check --config ./config/oxfmt.json src"}}',
+    });
+    const r = await formatterCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));
     expect(r.pass).toBe(true);
   });
 

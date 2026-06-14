@@ -118,7 +118,7 @@ const ciCd: Pillar = {
       id: "ci-runs-linters",
       name: "CI runs linters",
       description:
-        "The CI pipeline runs linting (eslint, biome, ruff, golangci-lint, or generic lint commands).",
+        "The CI pipeline runs linting or formatting checks (eslint, biome, oxlint, oxfmt, ruff, golangci-lint, or generic lint commands).",
       pillarId: "ci-cd",
       level: 3,
       requiresLLM: false,
@@ -133,7 +133,7 @@ const ciCd: Pillar = {
         }
 
         const lintPatterns =
-          /\b(npm\s+run\s+lint|yarn\s+lint|pnpm\s+lint|bun\s+run\s+lint|eslint|biome\s+check|biome\s+lint|ruff\s+check|ruff\s+lint|golangci-lint|make\s+lint|gradle\s+ktlintCheck|\.\/gradlew\s+ktlintCheck|gradle\s+detekt|\.\/gradlew\s+detekt|gradle\s+ktfmtCheck|\.\/gradlew\s+ktfmtCheck|\.\/gradlew\s+spotlessCheck|gradle\s+spotlessCheck|mvn\s+checkstyle|\.\/mvnw\s+checkstyle|mvn\s+pmd|cargo\s+clippy|cargo\s+fmt\s+--check|dotnet\s+format|rubocop|phpstan|psalm|phpcs|swiftlint)\b/i;
+          /\b(npm\s+run\s+lint|yarn\s+lint|pnpm\s+lint|bun\s+run\s+lint|eslint|biome\s+check|biome\s+lint|oxlint|oxfmt|ruff\s+check|ruff\s+lint|golangci-lint|make\s+lint|gradle\s+ktlintCheck|\.\/gradlew\s+ktlintCheck|gradle\s+detekt|\.\/gradlew\s+detekt|gradle\s+ktfmtCheck|\.\/gradlew\s+ktfmtCheck|\.\/gradlew\s+spotlessCheck|gradle\s+spotlessCheck|mvn\s+checkstyle|\.\/mvnw\s+checkstyle|mvn\s+pmd|cargo\s+clippy|cargo\s+fmt\s+--check|dotnet\s+format|rubocop|phpstan|psalm|phpcs|swiftlint)\b/i;
 
         for (const { file, content } of configs) {
           if (lintPatterns.test(content)) {

@@ -25,6 +25,9 @@ const styleLinting: Pillar = {
           "eslint.config.*",
           "biome.json",
           "biome.jsonc",
+          ".oxlintrc.json",
+          ".oxlintrc.jsonc",
+          "oxlint.config.ts",
           ".ruff.toml",
           "ruff.toml",
           ".golangci.yml",
@@ -47,6 +50,29 @@ const styleLinting: Pillar = {
             pass: true,
             message: `Linter configuration found: ${found}`,
           };
+        }
+
+        // Check package.json for oxlint dependency or script usage, including custom --config paths.
+        const packageJsonLint = await readFileContent(repoPath, "package.json");
+        if (packageJsonLint) {
+          try {
+            const pkg = JSON.parse(packageJsonLint);
+            const scripts = Object.values(pkg.scripts ?? {}).join("\n");
+            const dependencies = {
+              ...pkg.dependencies,
+              ...pkg.devDependencies,
+              ...pkg.peerDependencies,
+            };
+            if (scripts.includes("oxlint") || dependencies.oxlint) {
+              return {
+                criterionId: "linter",
+                pass: true,
+                message: "oxlint found in package.json",
+              };
+            }
+          } catch {
+            // ignore parse errors
+          }
         }
 
         // Check for Kotlin/Java linters in build.gradle.kts or build.gradle
@@ -130,7 +156,7 @@ const styleLinting: Pillar = {
           pass: false,
           message: "No linter configuration found.",
           details:
-            "Add ESLint, Biome, Ruff, golangci-lint, detekt, ktlint, Checkstyle, clippy, StyleCop, RuboCop, PHPStan, or SwiftLint to enforce code quality.",
+            "Add ESLint, Biome, oxlint, Ruff, golangci-lint, detekt, ktlint, Checkstyle, clippy, StyleCop, RuboCop, PHPStan, or SwiftLint to enforce code quality.",
         };
       },
     },
@@ -156,6 +182,39 @@ const styleLinting: Pillar = {
             pass: true,
             message: `Formatter configuration found: ${prettierFound}`,
           };
+        }
+
+        // Check oxfmt
+        const oxfmtFound = await fileExists(repoPath, ".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts");
+        if (oxfmtFound) {
+          return {
+            criterionId: "formatter",
+            pass: true,
+            message: `oxfmt configuration found: ${oxfmtFound}`,
+          };
+        }
+
+        // Check package.json for oxfmt dependency or script usage, including custom --config paths.
+        const packageJsonFmt = await readFileContent(repoPath, "package.json");
+        if (packageJsonFmt) {
+          try {
+            const pkg = JSON.parse(packageJsonFmt);
+            const scripts = Object.values(pkg.scripts ?? {}).join("\n");
+            const dependencies = {
+              ...pkg.dependencies,
+              ...pkg.devDependencies,
+              ...pkg.peerDependencies,
+            };
+            if (scripts.includes("oxfmt") || dependencies.oxfmt) {
+              return {
+                criterionId: "formatter",
+                pass: true,
+                message: "oxfmt found in package.json",
+              };
+            }
+          } catch {
+            // ignore parse errors
+          }
         }
 
         // Check Biome with formatter
@@ -270,7 +329,7 @@ const styleLinting: Pillar = {
           pass: false,
           message: "No formatter configuration found.",
           details:
-            "Add Prettier, Biome, Black, Ruff, ktlint, ktfmt, Spotless, google-java-format, rustfmt, RuboCop, PHP-CS-Fixer, or SwiftFormat to enforce consistent code formatting.",
+            "Add Prettier, Biome, oxfmt, Black, Ruff, ktlint, ktfmt, Spotless, google-java-format, rustfmt, RuboCop, PHP-CS-Fixer, or SwiftFormat to enforce consistent code formatting.",
         };
       },
     },
