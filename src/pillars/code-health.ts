@@ -31,6 +31,7 @@ const codeHealth: Pillar = {
           "bun.lockb",
           "yarn.lock",
           "pnpm-lock.yaml",
+          "uv.lock",
           "gradle.lockfile",
           "build.gradle.kts",
           "build.gradle",

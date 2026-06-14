@@ -31,6 +31,12 @@ const deadCodeCheck = getCheck(codeHealth, "dead-code-detection");
 // no-outdated-deps — new lock files recognized
 // ---------------------------------------------------------------------------
 describe("no-outdated-deps", () => {
+  test("python: uv.lock (fresh)", async () => {
+    const dir = await make("uv-fresh", { "uv.lock": "" });
+    const r = await freshnessCheck(dir, mockProjectInfo({ detectedTypes: ["python"] }));
+    expect(r.pass).toBe(true);
+  });
+
   test("csharp: packages.lock.json (fresh)", async () => {
     const dir = await make("cs-fresh", { "packages.lock.json": "{}" });
     const r = await freshnessCheck(dir, mockProjectInfo({ detectedTypes: ["csharp"] }));

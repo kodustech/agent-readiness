@@ -32,6 +32,12 @@ const setupScriptCheck = getCheck(devEnvironment, "setup-script");
 // lock-file
 // ---------------------------------------------------------------------------
 describe("lock-file", () => {
+  test("python: uv.lock", async () => {
+    const dir = await make("uv-lock", { "uv.lock": "" });
+    const r = await lockFileCheck(dir, mockProjectInfo({ detectedTypes: ["python"] }));
+    expect(r.pass).toBe(true);
+  });
+
   test("csharp: packages.lock.json", async () => {
     const dir = await make("cs-lock", { "packages.lock.json": "{}" });
     const r = await lockFileCheck(dir, mockProjectInfo({ detectedTypes: ["csharp"] }));
