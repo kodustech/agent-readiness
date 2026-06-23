@@ -17,7 +17,7 @@ const devEnvironment: Pillar = {
       id: "lock-file",
       name: "Lock file present",
       description:
-        "A dependency lock file exists (package-lock.json, yarn.lock, pnpm-lock.yaml, go.sum, etc.).",
+        "A dependency lock file exists (package-lock.json, uv.lock, yarn.lock, pnpm-lock.yaml, go.sum, etc.).",
       pillarId: "dev-environment",
       level: 1,
       requiresLLM: false,
@@ -28,6 +28,7 @@ const devEnvironment: Pillar = {
           "bun.lockb",
           "yarn.lock",
           "pnpm-lock.yaml",
+          "uv.lock",
           "poetry.lock",
           "Pipfile.lock",
           "go.sum",

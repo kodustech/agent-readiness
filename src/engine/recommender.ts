@@ -120,7 +120,7 @@ const CRITERION_INFO: Record<
   // Dev Environment
   "lock-file": {
     description:
-      "Commit a dependency lock file (package-lock.json, bun.lockb, yarn.lock, poetry.lock, etc.)",
+      "Commit a dependency lock file (package-lock.json, bun.lockb, uv.lock, yarn.lock, poetry.lock, etc.)",
     reason:
       "Lock files ensure agents install the exact same dependency versions, preventing 'works on my machine' issues",
   },
