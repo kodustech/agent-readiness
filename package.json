@@ -37,8 +37,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "chalk": "^5.4.1",
+    "@kodus/agent-readiness": "^0.1.3",
     "boxen": "^8.0.1",
+    "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",
     "commander": "^13.1.0",
     "fast-glob": "^3.3.3",

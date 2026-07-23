@@ -1,3 +1,16 @@
+# Notes on how to execute on workbench/locally
+
+```bash
+# Run against a target repo
+node dist/index.js ../commerce-product-data
+
+If you have bun installed elsewhere, the native path is simpler:
+>bun run build:web
+>bun run src/index.ts ../commerce-product-data
+
+```
+
+
 # Is your codebase ready for AI agents?
 
 <p align="center">

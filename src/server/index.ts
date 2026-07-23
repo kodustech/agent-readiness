@@ -104,10 +104,9 @@ export async function startServer(reportData: SerializedReportData): Promise<{
     res.end(injectedHtml);
   });
 
+  const port = 10010;
   return new Promise((resolve) => {
-    server.listen(0, () => {
-      const addr = server.address();
-      const port = typeof addr === "object" && addr ? addr.port : 0;
+    server.listen(port, () => {
       const url = `http://localhost:${port}`;
       resolve({ server, url });
     });

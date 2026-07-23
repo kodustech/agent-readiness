@@ -5,6 +5,7 @@ import devEnvironment from "./dev-environment.js";
 import ciCd from "./ci-cd.js";
 import codeHealth from "./code-health.js";
 import security from "./security.js";
+import dataHealth from "./data-health.js";
 import type { Pillar } from "../types/index.js";
 
 export const ALL_PILLARS: Pillar[] = [
@@ -15,4 +16,5 @@ export const ALL_PILLARS: Pillar[] = [
   ciCd,
   codeHealth,
   security,
+  dataHealth,
 ];

@@ -64,6 +64,7 @@ pillars:
   ci-cd: true
   code-health: true
   security: true
+  data-health: true
 
 # ── Criteria ─────────────────────────────────────────────────
 # Fine-grained toggles for individual criteria within pillars.
@@ -118,6 +119,14 @@ criteria:
   secrets-detection: true
   security-policy: true
   dep-update-automation: true
+
+  # Data Health
+  data-freshness-monitoring: true
+  data-quality-tests: true
+  schema-documentation: true
+  pii-classification: true
+  key-constraints-declared: true
+  data-model-docs-quality: true
 
 # ── Thresholds ───────────────────────────────────────────────
 # Override the scoring thresholds used when computing maturity

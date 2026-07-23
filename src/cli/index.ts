@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import ora from "ora";
 import chalk from "chalk";
-import { version, description } from "../../package.json";
+import { version, description } from "../../package.json" with { type: "json" };
 import type { CLIOptions, Pillar, ReportData } from "../types/index.js";
 import { detectProject } from "../engine/detector.js";
 import { AnalysisEngine } from "../engine/analyzer.js";
