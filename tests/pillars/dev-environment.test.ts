@@ -32,6 +32,12 @@ const setupScriptCheck = getCheck(devEnvironment, "setup-script");
 // lock-file
 // ---------------------------------------------------------------------------
 describe("lock-file", () => {
+  test("python: uv.lock", async () => {
+    const dir = await make("uv-lock", { "uv.lock": "" });
+    const r = await lockFileCheck(dir, mockProjectInfo({ detectedTypes: ["python"] }));
+    expect(r.pass).toBe(true);
+  });
+
   test("node: bun.lock", async () => {
     const dir = await make("node-bun-lock", { "bun.lock": "{}" });
     const r = await lockFileCheck(dir, mockProjectInfo({ detectedTypes: ["node"] }));

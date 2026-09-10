@@ -420,7 +420,7 @@ Without `--ai`, AI-powered criteria are **skipped** (not counted as failures).
 
 | Criterion | Level | AI | What It Detects |
 |---|---|---|---|
-| `lock-file` | 1 | No | package-lock.json, bun.lockb, yarn.lock, go.sum, Cargo.lock, gradle.lockfile, packages.lock.json, Gemfile.lock, composer.lock, Package.resolved |
+| `lock-file` | 1 | No | package-lock.json, bun.lockb, yarn.lock, uv.lock, go.sum, Cargo.lock, gradle.lockfile, packages.lock.json, Gemfile.lock, composer.lock, Package.resolved |
 | `env-documentation` | 2 | No | .env.example, .env.template |
 | `setup-script` | 2 | No | Makefile targets, setup scripts, `dev` script, Gradle wrapper, Maven wrapper, .sln (dotnet), Rakefile |
 | `version-pinned` | 2 | No | .nvmrc, .python-version, .tool-versions, mise.toml, .sdkmanrc, .java-version, rust-toolchain.toml, .ruby-version, .php-version, .swift-version, global.json |
@@ -441,7 +441,7 @@ Without `--ai`, AI-powered criteria are **skipped** (not counted as failures).
 
 | Criterion | Level | AI | What It Detects |
 |---|---|---|---|
-| `no-outdated-deps` | 3 | No | Lock file freshness across all languages (npm, yarn, pnpm, bun, Gradle, Poetry, Pipfile, go.sum, Cargo.lock, packages.lock.json, Gemfile.lock, composer.lock, Package.resolved) |
+| `no-outdated-deps` | 3 | No | Lock file freshness across all languages (npm, yarn, pnpm, bun, uv, Gradle, Poetry, Pipfile, go.sum, Cargo.lock, packages.lock.json, Gemfile.lock, composer.lock, Package.resolved) |
 | `dead-code-detection` | 4 | No | Knip, unused-exports ESLint plugin, detekt, vulture (Python), cargo-udeps (Rust), SpotBugs/FindBugs (Java), Roslynator (C#), debride/reek (Ruby), PHPMD (PHP) |
 | `bundle-analysis` | 5 | No | webpack-bundle-analyzer, @next/bundle-analyzer, size-limit |
 
