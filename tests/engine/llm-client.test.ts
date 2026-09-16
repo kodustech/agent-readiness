@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { createLLMClient } from "../../src/engine/llm-client.js";
+import { createLLMClient, DEFAULT_MODEL } from "../../src/engine/llm-client.js";
 
 interface CapturedRequest {
   url: string;
@@ -46,7 +46,7 @@ describe("createLLMClient", () => {
     const client = createLLMClient({ apiKey: "test-key" });
     await client.evaluate("criterion", "context");
 
-    expect(captured?.body.model).toBe("gpt-5-mini");
+    expect(captured?.body.model).toBe(DEFAULT_MODEL);
   });
 
   test("sends configured model in request body", async () => {
@@ -72,7 +72,7 @@ describe("createLLMClient", () => {
     const client = createLLMClient({ apiKey: "test-key", model: "" });
     await client.evaluate("criterion", "context");
 
-    expect(captured?.body.model).toBe("gpt-5-mini");
+    expect(captured?.body.model).toBe(DEFAULT_MODEL);
   });
 
   test("returns parsed pass/message/details from response", async () => {

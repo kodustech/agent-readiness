@@ -1,7 +1,7 @@
 import type { LLMClient } from "../types/index.js";
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
-const DEFAULT_MODEL = "gpt-5-mini";
+export const DEFAULT_MODEL = "gpt-5-mini";
 
 const SYSTEM_PROMPT = `You are a code repository evaluator. Your job is to assess whether a repository meets specific readiness criteria.
 
