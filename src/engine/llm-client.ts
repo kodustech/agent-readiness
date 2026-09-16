@@ -25,6 +25,7 @@ Rules:
 interface LLMClientOptions {
   apiKey: string;
   apiBaseUrl?: string;
+  model?: string;
 }
 
 interface ChatCompletionResponse {
@@ -36,7 +37,7 @@ interface ChatCompletionResponse {
 }
 
 export function createLLMClient(options: LLMClientOptions): LLMClient {
-  const { apiKey, apiBaseUrl = DEFAULT_BASE_URL } = options;
+  const { apiKey, apiBaseUrl = DEFAULT_BASE_URL, model = DEFAULT_MODEL } = options;
 
   const evaluate: LLMClient["evaluate"] = async (prompt, context) => {
     try {
@@ -49,7 +50,7 @@ export function createLLMClient(options: LLMClientOptions): LLMClient {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: DEFAULT_MODEL,
+          model,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             {

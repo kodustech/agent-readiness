@@ -76,11 +76,13 @@ async function main(options: CLIOptions): Promise<void> {
     const aiEnabled = options.ai || config.aiEnabled || false;
     const apiKey =
       options.apiKey || config.apiKey || process.env.KODUS_API_KEY || process.env.OPENAI_API_KEY;
+    const apiBaseUrl = options.apiBaseUrl || config.apiBaseUrl;
+    const model = options.model || config.model;
 
     // Create LLM client if AI is enabled
     const llmClient =
       aiEnabled && apiKey
-        ? createLLMClient({ apiKey, apiBaseUrl: config.apiBaseUrl })
+        ? createLLMClient({ apiKey, apiBaseUrl, model })
         : undefined;
 
     if (aiEnabled && !apiKey) {
@@ -211,6 +213,8 @@ export function run(): void {
     .argument("[path]", "Path to the repository to evaluate", process.cwd())
     .option("--ai", "Enable AI-powered criteria evaluation", false)
     .option("--api-key <key>", "API key for AI evaluations")
+    .option("--api-base-url <url>", "Base URL for the LLM API (OpenAI-compatible)")
+    .option("--model <model>", "LLM model to use for AI evaluations")
     .option("--ci", "Run in CI mode (non-interactive, exit code reflects level)", false)
     .option("--format <format>", "Output format (text or json)", "text")
     .option("--min-level <n>", "Minimum maturity level to pass (1-5)")
@@ -222,6 +226,8 @@ export function run(): void {
         path: pathArg,
         ai: Boolean(opts.ai),
         apiKey: opts.apiKey as string | undefined,
+        apiBaseUrl: opts.apiBaseUrl as string | undefined,
+        model: opts.model as string | undefined,
         ci: Boolean(opts.ci),
         format: (opts.format as "text" | "json") ?? "text",
         minLevel: opts.minLevel !== undefined ? Number(opts.minLevel) : undefined,

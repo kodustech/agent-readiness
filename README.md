@@ -169,6 +169,8 @@ Arguments:
 Options:
   --ai                   Enable AI-powered criteria evaluation
   --api-key <key>        API key for AI evaluations (or set KODUS_API_KEY / OPENAI_API_KEY)
+  --api-base-url <url>   Base URL for the LLM API (OpenAI-compatible)
+  --model <model>        LLM model to use for AI evaluations
   --ci                   Run in CI mode (non-interactive, exit code reflects level)
   --format <format>      Output format: "text" or "json" (default: "text")
   --min-level <n>        Minimum maturity level required (1-5). Exits with code 1 if below threshold
@@ -368,7 +370,12 @@ Uses an OpenAI-compatible API. Configure a custom endpoint in `.kodus-readiness.
 aiEnabled: true
 apiKey: "sk-your-key"
 apiBaseUrl: "https://your-custom-endpoint.com/v1"
+model: "your-model-name"
 ```
+
+The `model` value is sent as-is to the endpoint, so it must match the model name registered there. For example, when using a [LiteLLM](https://docs.litellm.ai/) proxy or gateway, use the exact `model_name` from its `model_list`. Defaults to `gpt-5-mini`.
+
+Precedence: CLI flag > config file > default. API keys are secrets — prefer the `KODUS_API_KEY` environment variable or `--api-key` over committing `apiKey` to your config file.
 
 Without `--ai`, AI-powered criteria are **skipped** (not counted as failures).
 

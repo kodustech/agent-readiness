@@ -93,12 +93,15 @@ export interface Config {
   aiEnabled?: boolean;
   apiKey?: string;
   apiBaseUrl?: string;
+  model?: string;
 }
 
 export interface CLIOptions {
   path: string;
   ai: boolean;
   apiKey?: string;
+  apiBaseUrl?: string;
+  model?: string;
   ci: boolean;
   format: "text" | "json";
   minLevel?: number;
