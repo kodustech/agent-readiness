@@ -37,7 +37,8 @@ interface ChatCompletionResponse {
 }
 
 export function createLLMClient(options: LLMClientOptions): LLMClient {
-  const { apiKey, apiBaseUrl = DEFAULT_BASE_URL, model = DEFAULT_MODEL } = options;
+  const { apiKey, apiBaseUrl = DEFAULT_BASE_URL } = options;
+  const model = options.model || DEFAULT_MODEL;
 
   const evaluate: LLMClient["evaluate"] = async (prompt, context) => {
     try {
