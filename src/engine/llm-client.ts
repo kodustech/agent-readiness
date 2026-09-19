@@ -1,7 +1,7 @@
 import type { LLMClient } from "../types/index.js";
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
-const DEFAULT_MODEL = "gpt-5-mini";
+export const DEFAULT_MODEL = "gpt-5-mini";
 
 const SYSTEM_PROMPT = `You are a code repository evaluator. Your job is to assess whether a repository meets specific readiness criteria.
 
@@ -25,6 +25,7 @@ Rules:
 interface LLMClientOptions {
   apiKey: string;
   apiBaseUrl?: string;
+  model?: string;
 }
 
 interface ChatCompletionResponse {
@@ -37,6 +38,7 @@ interface ChatCompletionResponse {
 
 export function createLLMClient(options: LLMClientOptions): LLMClient {
   const { apiKey, apiBaseUrl = DEFAULT_BASE_URL } = options;
+  const model = options.model || DEFAULT_MODEL;
 
   const evaluate: LLMClient["evaluate"] = async (prompt, context) => {
     try {
@@ -49,7 +51,7 @@ export function createLLMClient(options: LLMClientOptions): LLMClient {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: DEFAULT_MODEL,
+          model,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             {
