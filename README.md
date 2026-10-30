@@ -373,7 +373,7 @@ apiBaseUrl: "https://your-custom-endpoint.com/v1"
 model: "your-model-name"
 ```
 
-The `model` value is sent as-is to the endpoint, so it must match the model name registered there. For example, when using a [LiteLLM](https://docs.litellm.ai/) proxy or gateway, use the exact `model_name` from its `model_list`. Defaults to `gpt-5-mini`.
+The `model` value is sent as-is to the endpoint, so it must match the model name registered there. For example, when using a [LiteLLM](https://docs.litellm.ai/) proxy or gateway, use the exact `model_name` from its `model_list`. Defaults to `gpt-5.6-terra`.
 
 Precedence: CLI flag > config file > default. API keys are secrets — prefer the `KODUS_API_KEY` environment variable or `--api-key` over committing `apiKey` to your config file.
 

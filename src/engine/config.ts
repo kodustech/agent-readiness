@@ -132,7 +132,7 @@ thresholds:
 # aiEnabled: false
 # apiKey: ""           # Or set KODUS_API_KEY env variable
 # apiBaseUrl: ""       # Custom endpoint for the LLM API
-# model: ""            # LLM model name (default: gpt-5-mini)
+# model: ""            # LLM model name (default: gpt-5.6-terra)
 `;
 }
 
